@@ -16,7 +16,7 @@ class GithubCIConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///test.db'
     DEBUG = True
 
-class DevelopmentConfig(Config):
+class DevelopmentConfig(Config): 
     SQLALCHEMY_DATABASE_URI = 'postgresql://{dbuser}:{dbpass}@{dbhost}/{dbname}'.format(
     dbuser=os.getenv('DBUSER'),
     dbpass=os.getenv('DBPASS'),
@@ -24,3 +24,5 @@ class DevelopmentConfig(Config):
     dbname=os.getenv('DBNAME')
     )
     DEBUG = True
+
+# Create class for UAT
