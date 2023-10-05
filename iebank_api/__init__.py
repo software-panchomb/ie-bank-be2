@@ -26,7 +26,8 @@ else:
 db = SQLAlchemy(app)
 
 from iebank_api.models import Account
-db.create_all() #If the environment variable is set to local, whihc it is for our machine
+with app.app_context():
+    db.create_all() #If the environment variable is set to local, whihc it is for our machine
 CORS(app)
 
 from iebank_api import routes
