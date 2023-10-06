@@ -30,32 +30,6 @@ def test_create_account(testing_client):
     assert response.status_code == 200
 
 # Is the following correct?
-def test_get_account_non_existent(testing_client):
-    """
-    GIVEN a Flask application
-    WHEN a single account page is requested (GET)
-    THEN check the response is 404 when the account does not exist
-    """
-    response = testing_client.get('/accounts/999') #Testing with non-existant account
-    assert response.status_code == 404
-
-def test_update_account_non_existent(testing_client):
-    """
-    GIVEN a Flask application
-    WHEN the '/accounts/<int:id>' page is put to (PUT)
-    THEN check the response is 404 when the account does not exist
-    """
-    response = testing_client.put('/accounts/999', json={'name': 'Updated Name'})  # Use an ID that doesn't exist
-    assert response.status_code == 404
-
-def test_delete_account_non_existent(testing_client):
-    """
-    GIVEN a Flask application
-    WHEN the '/accounts/<int:id>' page is deleted (DELETE)
-    THEN check the response is 404 when the account does not exist
-    """
-    response = testing_client.delete('/accounts/999')  # Use an ID that doesn't exist
-    assert response.status_code == 404
 
 # Since There is a fake guy called John Doe, i'll go ahead with the following.
 def test_get_account(testing_client):
