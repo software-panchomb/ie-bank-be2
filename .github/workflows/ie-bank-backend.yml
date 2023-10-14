@@ -14,6 +14,8 @@ permissions:
 env: 
   BACKEND_WEBAPP_DEV: sarwari-be-dev
   BACKEND_WEBAPP_UAT: sarwari-be-uat
+  source_branch_name: ${{ github.ref }}
+  pr_target_branch_name: ${{ github.base_ref }}
 
 jobs:
 
@@ -43,7 +45,15 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        python -m pytest --cov=iebank_api -v
+
+        # Run unit tests
+        python -m pytest tests/unit -v
+
+        # Run functional tests
+        python -m pytest tests/functional -v
+
+        # Generate coverage report
+        python -m pytest --cov=iebank_api --cov-report=xml:coverage.xml
     - name: Upload artifact for deployment jobs
       uses: actions/upload-artifact@v2
       with:
@@ -58,7 +68,7 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-    - name: Download artifact from build job
+    - name: Download artifact from build-and-test job
       uses: actions/download-artifact@v2
       with:
         name: python-app
@@ -83,7 +93,7 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-    - name: Download artifact from build job
+    - name: Download artifact from build-and-test job
       uses: actions/download-artifact@v2
       with:
         name: python-app
