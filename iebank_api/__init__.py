@@ -1,10 +1,12 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_login import LoginManager
 from dotenv import load_dotenv
 import os
 
 app = Flask(__name__)
+login_manager = LoginManager()
 
 load_dotenv()
 
@@ -31,6 +33,8 @@ db = SQLAlchemy(app)
 from iebank_api.models import Account
 with app.app_context():
     db.create_all() #If the environment variable is set to local, whihc it is for our machine
+    login_manager.login_view = '/login'
+    login_manager.init_app(app)
 CORS(app)
 
 from iebank_api import routes
