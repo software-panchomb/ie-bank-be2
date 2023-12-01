@@ -1,7 +1,17 @@
-from flask import Flask, request, jsonify
-from flask_login import login_user, logout_user, login_required
+from flask import Flask, request, jsonify, abort
+from flask_login import login_user, logout_user, login_required, current_user
 from iebank_api import db, app, login_manager
 from iebank_api.models import Account, User
+from functools import wraps
+
+
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.admin:
+            abort(403)
+        return fn(*args, **kwargs)
+    return wrapper
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -37,7 +47,8 @@ def logout():
     response['message'] = 'Logout successful'
     return jsonify(response)
 
-@app.route('/register', methods=['POST'])
+@app.route('/user/register', methods=['POST'])
+@admin_required
 def register():
     response = {}
     json = request.json
@@ -52,6 +63,24 @@ def register():
     db.session.commit()
 
     response['message'] = 'User created'
+    return jsonify(response)
+
+@app.route('/user/delete', methods=['DELETE'])
+@admin_required
+def delete_user():
+    response = {}
+    json = request.json
+
+    email = json['email']
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        response['message'] = 'User deleted'
+    else:
+        response['message'] = 'User not found'
+    
     return jsonify(response)
 
 @app.route('/transfer', methods=['POST'])
@@ -107,7 +136,7 @@ def create_account():
     name = request.json['name']
     currency = request.json['currency']
     country = request.json['country']
-    account = Account(name, currency,country)
+    account = Account(name, currency, country, current_user.id)
     db.session.add(account)
     db.session.commit()
     return format_account(account)
@@ -116,9 +145,12 @@ def create_account():
 @login_required
 def get_accounts():
     accounts = Account.query.all()
+    if not current_user.admin:
+        accounts = Account.query.filter_by(user_id=current_user.id).all()
     return {'accounts': [format_account(account) for account in accounts]}
 
 @app.route('/users', methods=['GET'])
+@admin_required
 def get_users():
     users = User.query.all()
     return {'users': [format_user(user) for user in users]}
@@ -151,7 +183,8 @@ def format_account(account):
         'currency': account.currency,
         'country':account.country,
         'status': account.status,
-        'created_at': account.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        'created_at': account.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'user_id': account.user_id
     }
 
 def format_user(user):
