@@ -99,6 +99,9 @@ def transfer():
         if sender_account.balance >= amount:
             sender_account.balance -= amount
             receiver_account.balance += amount
+
+            transaction = Transaction(amount, sender_account.currency, sender_account.id, receiver_account.id)
+            db.session.add(transaction)
             db.session.commit()
             response['message'] = 'Transfer successful'
         else:
@@ -131,6 +134,11 @@ def add_money():
 def skull():
     return 'Hi! This is the BACKEND SKULL! 💀'
 
+@app.route('/transactions', methods=['GET'])
+def get_transactions(id):
+    transactions = current_user.transactions
+    return {'transactions': [format_transaction(transaction) for transaction in transactions]}
+
 @app.route('/accounts', methods=['POST'])
 def create_account():
     name = request.json['name']
@@ -144,9 +152,10 @@ def create_account():
 @app.route('/accounts', methods=['GET'])
 @login_required
 def get_accounts():
-    accounts = Account.query.all()
-    if not current_user.admin:
-        accounts = Account.query.filter_by(user_id=current_user.id).all()
+    if current_user.admin:
+        accounts = Account.query.all()
+    else:
+        accounts = current_user.accounts
     return {'accounts': [format_account(account) for account in accounts]}
 
 @app.route('/users', methods=['GET'])
@@ -195,4 +204,14 @@ def format_user(user):
         'password': user.password,
         'created_at': user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         'admin': user.admin
+    }
+
+def format_transaction(transaction):
+    return {
+        'id': transaction.id,
+        'amount': transaction.amount,
+        'currency': transaction.currency,
+        'created_at': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'account_id': transaction.account_id,
+        'destination_account_id': transaction.destination_account_id
     }

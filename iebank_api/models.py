@@ -15,6 +15,7 @@ class User(db.Model, UserMixin):
     
     # Add a relationship to the Account model
     accounts = db.relationship('Account', backref='user', lazy=True)
+    transactions = db.relationship('Transaction', backref='user', lazy=True)
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -47,3 +48,24 @@ class Account(db.Model):
         self.balance = 1000.0
         self.status = "Active"
         self.user_id = user_id
+
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(1), nullable=False, default="€")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+    destination_account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+
+    account = db.relationship('Account', foreign_keys=[account_id], backref='transactions')
+    destination_account = db.relationship('Account', foreign_keys=[destination_account_id], backref='incoming_transactions')
+
+    def __repr__(self):
+        return '<Transaction %r>' % self.id
+
+    def __init__(self, amount, currency, account_id, destination_account_id):
+        self.amount = amount
+        self.currency = currency
+        self.account_id = account_id
+        self.destination_account_id = destination_account_id
