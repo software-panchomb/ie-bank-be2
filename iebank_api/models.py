@@ -1,8 +1,9 @@
 from iebank_api import db
 from datetime import datetime
+from flask_login import UserMixin
 import string, random
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(32), nullable=False, unique=True)
     email = db.Column(db.String(64), nullable=False, unique=True)
@@ -13,10 +14,11 @@ class User(db.Model):
     def __repr__(self):
         return '<Event %r>' % self.username
 
-    def __init__(self, username, email, password):
+    def __init__(self, username, email, password, admin=False):
         self.username = username
         self.email = email
         self.password = password
+        self.admin = admin
 
 class Account(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,5 +38,5 @@ class Account(db.Model):
         self.account_number = ''.join(random.choices(string.digits, k=20))
         self.currency = currency
         self.country = country
-        self.balance = 0.0
+        self.balance = 1000.0
         self.status = "Active"

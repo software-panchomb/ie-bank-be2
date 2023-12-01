@@ -30,7 +30,7 @@ else:
 
 db = SQLAlchemy(app)
 
-from iebank_api.models import Account
+from iebank_api.models import Account, User
 with app.app_context():
     db.create_all() #If the environment variable is set to local, whihc it is for our machine
     login_manager.login_view = '/login'
