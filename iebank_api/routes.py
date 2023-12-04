@@ -24,19 +24,23 @@ def hello_world():
 @app.route('/login', methods=['POST'])
 def login():
     response = {}
+    response['success'] = False
     json = request.json
+    print(json)
     email = json['email']
     password = json['password']
     user = User.query.filter_by(email=email).first()
     if user:
         if user.password == password:
             response['message'] = 'Login successful'
+            response['success'] = True
             login_user(user)
         else:
             response['message'] = 'Incorrect password'
     else:
         response['message'] = 'User not found'
     
+    print(response)
     return jsonify(response)
 
 @app.route('/logout', methods=['POST'])
