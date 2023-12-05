@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
@@ -35,6 +35,13 @@ with app.app_context():
     db.create_all() #If the environment variable is set to local, whihc it is for our machine
     login_manager.login_view = '/login'
     login_manager.init_app(app)
-CORS(app)
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    # potential error for non admin users
+    return jsonify({"error": "Unauthorized", "message": "Authentication required"}), 401
+
+CORS(app, supports_credentials=True, samesite="None")
+
 
 from iebank_api import routes

@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, make_response
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_cors import cross_origin
 from iebank_api import db, app, login_manager
-from iebank_api.models import Account, User
+from iebank_api.models import Account, User, Transaction
 from functools import wraps
 
 
@@ -14,12 +15,16 @@ def admin_required(fn):
     return wrapper
 
 @login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+def load_user(id):
+    return User.query.get(int(id))
 
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
+
+@app.route('/get_current_user', methods=['GET'])
+def get_current_user():
+    return f'Current user: {current_user}'
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -34,14 +39,18 @@ def login():
         if user.password == password:
             response['message'] = 'Login successful'
             response['success'] = True
-            login_user(user)
+            response['is_admin'] = user.admin
+            login_user(user, remember=True)
+
+            response = make_response(jsonify(response))
         else:
             response['message'] = 'Incorrect password'
     else:
         response['message'] = 'User not found'
     
-    print(response)
-    return jsonify(response)
+    print(f'current_user {current_user}')
+    print(response.headers.getlist("Set-Cookie"))
+    return response
 
 @app.route('/logout', methods=['POST'])
 @login_required
@@ -69,34 +78,16 @@ def register():
     response['message'] = 'User created'
     return jsonify(response)
 
-@app.route('/user/delete', methods=['DELETE'])
-@admin_required
-def delete_user():
-    response = {}
-    json = request.json
-
-    email = json['email']
-    user = User.query.filter_by(email=email).first()
-
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        response['message'] = 'User deleted'
-    else:
-        response['message'] = 'User not found'
-    
-    return jsonify(response)
-
 @app.route('/transfer', methods=['POST'])
 def transfer():
     response = {}
     json = request.json
     print(json)
-    sender_account_number = json['sender_account_number']
+    sender_account_id = json['sender_account_id']
     receiver_account_number = json['receiver_account_number']
-    amount = json['amount']
+    amount = float(json['amount'])
 
-    sender_account = Account.query.filter_by(account_number=sender_account_number).first()
+    sender_account = Account.query.filter_by(id=sender_account_id).first()
     receiver_account = Account.query.filter_by(account_number=receiver_account_number).first()
 
     if sender_account and receiver_account:
@@ -144,6 +135,7 @@ def get_transactions(id):
     return {'transactions': [format_transaction(transaction) for transaction in transactions]}
 
 @app.route('/accounts', methods=['POST'])
+@login_required
 def create_account():
     name = request.json['name']
     currency = request.json['currency']
@@ -167,6 +159,64 @@ def get_accounts():
 def get_users():
     users = User.query.all()
     return {'users': [format_user(user) for user in users]}
+
+@app.route('/users', methods=['POST'])
+@admin_required
+def create_user():
+    response = {}
+    response["success"] = False
+
+    username = request.json['username']
+    email = request.json['email']
+    password = request.json['password']
+    admin = request.json['admin']
+    
+    try:
+        user = User(username, email, password, admin=admin)
+        db.session.add(user)
+        db.session.commit()
+        response["message"] = "User created succesfully"
+        response["success"] = True
+    except:
+        response["message"] = "Error creating user"
+    
+    return jsonify(response)
+
+@app.route('/users/<int:id>', methods=['PUT'])
+@admin_required
+def update_user(id):
+    user = User.query.get(id)
+    user.username = request.json['username'] if 'username' in request.json else user.username
+    user.email = request.json['email'] if 'email' in request.json else user.email
+    user.password = request.json['password'] if 'password' in request.json else user.password
+    user.admin = request.json['admin'] if 'admin' in request.json else user.admin
+    db.session.commit()
+    return format_user(user)
+
+@app.route('/users/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_user(id):
+    response = {}
+    response["success"] = False
+    response["error"] = None
+
+    user = User.query.get(id)
+
+    if user:
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            response['message'] = 'User deleted'
+            response["success"] = True
+        except Exception as e:
+            response['message'] = 'Error deleting user'
+            response["error"] = str(e)
+            print(e)
+            response["success"] = False
+    else:
+        response['message'] = 'User not found'
+    
+    return jsonify(response)
 
 @app.route('/accounts/<int:id>', methods=['GET'])
 def get_account(id):
