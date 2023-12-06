@@ -1,7 +1,7 @@
 # Security Policy for IE Bank Frontend
 
 ## Introduction
-This document delineates the security procedures and policies governing the IE Bank Frontend project. 
+This document delineates the security procedures and policies governing the IE Bank Backend project. 
 Our aim is to outline a comprehensive approach to handle security vulnerabilities and to offer clear guidelines for contributors and users alike, 
 ensuring the integrity and safety of the project. 
 As part of our commitment to robust security, we have integrated advanced practices and tools, 
