@@ -150,7 +150,6 @@ def get_accounts():
     else:
         accounts = current_user.accounts
 
-    accounts = list(filter(lambda account: account.active, accounts))
     return {'accounts': [format_account(account) for account in accounts]}
 
 @app.route('/users', methods=['GET'])
@@ -217,11 +216,13 @@ def delete_user(id):
     return jsonify(response)
 
 @app.route('/accounts/<int:id>', methods=['GET'])
+@login_required
 def get_account(id):
     account = Account.query.get(id)
     return format_account(account)
 
 @app.route('/accounts/<int:id>', methods=['PUT'])
+@admin_required
 def update_account(id):
     account = Account.query.get(id)
     account.name = request.json['name']
@@ -229,6 +230,7 @@ def update_account(id):
     return format_account(account)
 
 @app.route('/accounts/<int:id>', methods=['DELETE'])
+@admin_required
 def delete_account(id):
     account = Account.query.get(id)
     account.active = False
