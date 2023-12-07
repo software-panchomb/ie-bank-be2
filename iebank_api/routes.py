@@ -31,7 +31,6 @@ def login():
     response = {}
     response['success'] = False
     json = request.json
-    print(json)
     email = json['email']
     password = json['password']
     user = User.query.filter_by(email=email).first()
@@ -44,12 +43,12 @@ def login():
 
             response = make_response(jsonify(response))
         else:
-            response['message'] = 'Incorrect password'
+            response['message'] = 'Invalid Credentials'
+            return make_response(jsonify(response), 401)
     else:
-        response['message'] = 'User not found'
+        response['message'] = 'Invalid Credentials'
+        return make_response(jsonify(response), 401)
     
-    print(f'current_user {current_user}')
-    print(response.headers.getlist("Set-Cookie"))
     return response
 
 @app.route('/logout', methods=['POST'])
@@ -82,7 +81,6 @@ def register():
 def transfer():
     response = {}
     json = request.json
-    print(json)
     sender_account_id = json['sender_account_id']
     receiver_account_number = json['receiver_account_number']
     amount = float(json['amount'])
@@ -115,7 +113,6 @@ def add_money():
     amount = json['amount']
 
     account = Account.query.filter_by(account_number=account_number).first()
-    print(Account.query.all())
     if account:
         account.balance += amount
         db.session.commit()
@@ -152,6 +149,8 @@ def get_accounts():
         accounts = Account.query.all()
     else:
         accounts = current_user.accounts
+
+    accounts = list(filter(lambda account: account.active, accounts))
     return {'accounts': [format_account(account) for account in accounts]}
 
 @app.route('/users', methods=['GET'])
@@ -211,7 +210,6 @@ def delete_user(id):
         except Exception as e:
             response['message'] = 'Error deleting user'
             response["error"] = str(e)
-            print(e)
             response["success"] = False
     else:
         response['message'] = 'User not found'
@@ -233,7 +231,7 @@ def update_account(id):
 @app.route('/accounts/<int:id>', methods=['DELETE'])
 def delete_account(id):
     account = Account.query.get(id)
-    db.session.delete(account)
+    account.active = False
     db.session.commit()
     return format_account(account)
 
