@@ -7,6 +7,9 @@ from functools import wraps
 from sqlalchemy import or_
 import pdb
 
+def write_to_file(filename, text):
+    with open(filename, 'a') as f:
+        f.write(text + '\n')
 
 def admin_required(fn):
     @wraps(fn)
@@ -66,34 +69,24 @@ def logout():
     response['message'] = 'Logout successful'
     return jsonify(response)
 
-@app.route('/user/register', methods=['POST'])
-@admin_required
-def register():
-    response = {}
-    json = request.json
-
-    username = json['username']
-    email = json['email']
-    password = json['password']
-
-    user = User(username, email, password)
-
-    db.session.add(user)
-    db.session.commit()
-
-    response['message'] = 'User created'
-    return jsonify(response)
 
 @app.route('/transfer', methods=['POST'])
 def transfer():
     response = {}
+    response['success'] = False
     json = request.json
     sender_account_id = json['sender_account_id']
-    receiver_account_number = json['receiver_account_number']
+    receiver_account_number = json['receiver_account_number'] if 'receiver_account_number' in json else None
+    receiver_account_id = json['receiver_account_id'] if 'receiver_account_id' in json else None
     amount = float(json['amount'])
 
+
+    receiver_account = None
     sender_account = Account.query.filter_by(id=sender_account_id).first()
-    receiver_account = Account.query.filter_by(account_number=receiver_account_number).first()
+    if receiver_account_number:
+        receiver_account = Account.query.filter_by(account_number=receiver_account_number).first()
+    elif receiver_account_id:
+        receiver_account = db.session.get(Account, receiver_account_id)
 
     if sender_account and receiver_account:
         if sender_account.balance >= amount:
@@ -103,29 +96,12 @@ def transfer():
             transaction = Transaction(amount, sender_account.currency, sender_account.id, receiver_account.id)
             db.session.add(transaction)
             db.session.commit()
+            response['success'] = True
             response['message'] = 'Transfer successful'
         else:
             response['message'] = 'Insufficient funds'
     else:
         response['message'] = 'One or more accounts not found'
-    
-    return jsonify(response)
-
-# TEST ROUTE (NOT FOR PRODUCTION)
-@app.route('/add_money', methods=['POST'])
-def add_money():
-    response = {}
-    json = request.json
-    account_number = json['account_number']
-    amount = json['amount']
-
-    account = Account.query.filter_by(account_number=account_number).first()
-    if account:
-        account.balance += amount
-        db.session.commit()
-        response['message'] = 'Money added'
-    else:
-        response['message'] = 'Account not found'
     
     return jsonify(response)
 
@@ -135,9 +111,12 @@ def skull():
 
 @app.route('/transactions', methods=['GET'])
 def get_transactions():
-    user_id = current_user.id  # replace with the actual user_id
-    account_ids = [account.id for account in Account.query.filter_by(user_id=user_id).all()]
-    transactions = Transaction.query.filter(or_(Transaction.account_id.in_(account_ids), Transaction.destination_account_id.in_(account_ids))).all()
+    if current_user.admin:
+        transactions = Transaction.query.all()
+    else:
+        user_id = current_user.id  # replace with the actual user_id
+        account_ids = [account.id for account in Account.query.filter_by(user_id=user_id).all()]
+        transactions = Transaction.query.filter(or_(Transaction.account_id.in_(account_ids), Transaction.destination_account_id.in_(account_ids))).all()
     
     return {'transactions': [format_transaction(transaction) for transaction in transactions]}
 
@@ -195,7 +174,7 @@ def create_user():
 @app.route('/users/<int:id>', methods=['PUT'])
 @admin_required
 def update_user(id):
-    user = User.query.get(id)
+    user = db.session.get(User, id)
     user.username = request.json['username'] if 'username' in request.json else user.username
     user.email = request.json['email'] if 'email' in request.json else user.email
     user.password = request.json['password'] if 'password' in request.json else user.password
@@ -210,7 +189,7 @@ def delete_user(id):
     response["success"] = False
     response["error"] = None
 
-    user = User.query.get(id)
+    user = db.session.get(User, id)
 
     if user:
         try:
@@ -234,9 +213,9 @@ def get_account(id):
     return format_account(account)
 
 @app.route('/accounts/<int:id>', methods=['PUT'])
-@admin_required
+@login_required
 def update_account(id):
-    account = Account.query.get(id)
+    account = db.session.get(Account, id)
     account.name = request.json['name']
     db.session.commit()
     return format_account(account)

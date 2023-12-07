@@ -36,10 +36,10 @@ def testing_client():
 def admin_session(testing_client):
     response = testing_client.post('/login', json={'email': f'{admin_username}@test.com', 'password': 'test'})
     admin_cookie = response.headers.getlist('Set-Cookie')
-    return admin_cookie[0]
+    return admin_cookie
 
 @pytest.fixture(scope='module')
 def nonadmin_session(testing_client):
     response = testing_client.post('/login', json={'email': f'{nonadmin_username}@test.com', 'password': 'test'})
     nonadmin_cookie = response.headers.getlist('Set-Cookie')
-    return nonadmin_cookie[0]
+    return nonadmin_cookie
