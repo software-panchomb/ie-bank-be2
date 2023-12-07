@@ -11,6 +11,8 @@ import pdb
 def admin_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
+        with open('error.txt', 'a') as f:
+            f.write('Checking admin: ' + str(current_user.username + ' ' + str(current_user.admin)) + '\n')
         if not current_user.is_authenticated or not current_user.admin:
             abort(403)
         return fn(*args, **kwargs)
@@ -42,6 +44,9 @@ def login():
             response['success'] = True
             response['is_admin'] = user.admin
             login_user(user, remember=True)
+
+            with open('error.txt', 'a') as f:
+                f.write('Logged in: ' + current_user.username + ' ' + str(current_user.admin) + '\n')
 
             response = make_response(jsonify(response))
         else:
@@ -139,6 +144,8 @@ def get_transactions():
 @app.route('/accounts', methods=['POST'])
 @login_required
 def create_account():
+    with open('error.txt', 'a') as f:
+        f.write('Creating account: ' + current_user.username + ' ' + str(current_user.admin) + '\n')
     name = request.json['name']
     currency = request.json['currency']
     country = request.json['country']

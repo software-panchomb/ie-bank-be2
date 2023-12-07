@@ -11,8 +11,8 @@ def generate_random_string(length=5):
     result_str = ''.join(random.choice(letters) for _ in range(length))
     return result_str
 
-admin_username = generate_random_string()
-nonadmin_username = generate_random_string()
+admin_username = 'admin' + generate_random_string()
+nonadmin_username = 'nonadmin' + generate_random_string()
 
 @pytest.fixture(scope='module')
 def testing_client():
@@ -36,10 +36,10 @@ def testing_client():
 def admin_session(testing_client):
     response = testing_client.post('/login', json={'email': f'{admin_username}@test.com', 'password': 'test'})
     admin_cookie = response.headers.getlist('Set-Cookie')
-    return admin_cookie
+    return admin_cookie[0]
 
 @pytest.fixture(scope='module')
 def nonadmin_session(testing_client):
     response = testing_client.post('/login', json={'email': f'{nonadmin_username}@test.com', 'password': 'test'})
     nonadmin_cookie = response.headers.getlist('Set-Cookie')
-    return nonadmin_cookie
+    return nonadmin_cookie[0]
