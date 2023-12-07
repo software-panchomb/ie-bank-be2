@@ -38,4 +38,4 @@ Our team is actively engaged in:
 ## Acknowledgments
 We extend our sincere gratitude to our dedicated team members, 
 whose relentless efforts and contributions have significantly bolstered the security of this project.
-Their expertise and commitment play a pivotal role in maintaining the high-security standards of the IE Bank Frontend.
+Their expertise and commitment play a pivotal role in maintaining the high-security standards of the IE Bank Backend.
