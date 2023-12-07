@@ -4,6 +4,8 @@ from flask_cors import cross_origin
 from iebank_api import db, app, login_manager
 from iebank_api.models import Account, User, Transaction
 from functools import wraps
+from sqlalchemy import or_
+import pdb
 
 
 def admin_required(fn):
@@ -127,8 +129,11 @@ def skull():
     return 'Hi! This is the BACKEND SKULL! 💀'
 
 @app.route('/transactions', methods=['GET'])
-def get_transactions(id):
-    transactions = current_user.transactions
+def get_transactions():
+    user_id = current_user.id  # replace with the actual user_id
+    account_ids = [account.id for account in Account.query.filter_by(user_id=user_id).all()]
+    transactions = Transaction.query.filter(or_(Transaction.account_id.in_(account_ids), Transaction.destination_account_id.in_(account_ids))).all()
+    
     return {'transactions': [format_transaction(transaction) for transaction in transactions]}
 
 @app.route('/accounts', methods=['POST'])

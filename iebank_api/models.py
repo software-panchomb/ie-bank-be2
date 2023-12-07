@@ -15,7 +15,7 @@ class User(db.Model, UserMixin):
     
     # Add a relationship to the Account model
     accounts = db.relationship('Account', backref='user', lazy=True)
-    #transactions = db.relationship('Transaction', backref='user', lazy=True)
+    # transactions = db.relationship('Transaction', backref='user', lazy=True)
 
     def __repr__(self):
         return '<User %r>' % self.username
