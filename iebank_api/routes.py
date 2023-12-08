@@ -217,6 +217,7 @@ def get_account(id):
 def update_account(id):
     account = db.session.get(Account, id)
     account.name = request.json['name']
+    account.currency = request.json['currency']
     db.session.commit()
     return format_account(account)
 
@@ -224,9 +225,13 @@ def update_account(id):
 @admin_required
 def delete_account(id):
     account = Account.query.get(id)
-    account.active = False
-    db.session.commit()
-    return format_account(account)
+    
+    if account:
+        db.session.delete(account)
+        db.session.commit()
+        return jsonify({'message': 'Account deleted successfully'})
+    else:
+        return jsonify({'error': 'Account not found'}), 404
 
 def format_account(account):
     return {
