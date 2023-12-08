@@ -205,8 +205,8 @@ def get_account(id):
 @login_required
 def update_account(id):
     account = db.session.get(Account, id)
-    account.name = request.json['name']
-    account.currency = request.json['currency']
+    account.name = request.json['name'] if 'name' in request.json else account.name
+    account.currency = request.json['currency'] if 'currency' in request.json else account.currency
     db.session.commit()
     return format_account(account)
 
