@@ -26,7 +26,7 @@ jobs:
       - name: 'Checkout Github Action'
         uses: actions/checkout@master
 
-      - nmae: 'Set ENV based on event'
+      - name: 'Set ENV based on event'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "ENV=uat" >> $GITHUB_ENV
