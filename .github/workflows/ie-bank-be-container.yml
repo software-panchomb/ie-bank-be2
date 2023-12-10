@@ -67,12 +67,12 @@ jobs:
       - name: 'Set appname based on event'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "ENV=grp4-be-uat" >> $GITHUB_ENV
+            echo "AZURE_WEBAPP_NAME=grp4-be-uat" >> $GITHUB_ENV
           elif [ "${{ github.event_name }}" = "push" ]; then
             if [ "${{ github.ref_name }}" = "main" ]; then
-              echo "ENV=grp4-be-prod" >> $GITHUB_ENV
+              echo "AZURE_WEBAPP_NAME=grp4-be-prod" >> $GITHUB_ENV
             else
-              echo "ENV=grp4-be-dev" >> $GITHUB_ENV
+              echo "AZURE_WEBAPP_NAME=grp4-be-dev" >> $GITHUB_ENV
             fi
           fi
 
