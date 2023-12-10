@@ -88,7 +88,9 @@ jobs:
               echo "ENV=dev" >> $GITHUB_ENV
             fi
           fi
-        
+
+      - name: 'View app name'
+        run: echo ${{ env.AZURE_WEBAPP_NAME }}-${{ env.ENV }}
 
       - uses: azure/webapps-deploy@v3
         with:
