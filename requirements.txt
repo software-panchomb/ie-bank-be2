@@ -4,7 +4,7 @@ coverage==7.3.2
 exceptiongroup==1.2.0
 Flask==3.0.0
 Flask-Cors==4.0.0
-Flask-Login==0.6.3
+git+https://github.com/panchomb/flask-login.git#egg=flask_login
 Flask-SQLAlchemy==3.1.1
 greenlet==3.0.1
 gunicorn==21.2.0

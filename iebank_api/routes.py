@@ -213,17 +213,24 @@ def update_account(id):
 @app.route('/accounts/<int:id>', methods=['DELETE'])
 @admin_required
 def delete_account(id):
-    try:
-        account = Account.query.get(id)
-        
-        if account:
+    response = {}
+    response["success"] = False
+
+    account = db.session.get(Account, id)
+
+    if account:
+        try:
             db.session.delete(account)
             db.session.commit()
-            return jsonify({'message': 'Account deleted successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            response['message'] = 'Account deleted'
+            response["success"] = True
+        except Exception as e:
+            response['message'] = 'Error deleting account'
+    else:
+        response['message'] = 'Account not found'
+
     
-    return jsonify({'error': 'Account not found'}), 404
+    return jsonify(response)
 
 def format_account(account):
     return {
